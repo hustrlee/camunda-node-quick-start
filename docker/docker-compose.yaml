@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  camunda-bpm:
+    image: camunda/camunda-bpm-platform:run-latest
+    container_name: camunda-bpm
+    restart: unless-stopped
+    depends_on:
+      - camunda-db
+    environment:
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://camunda-db:5432/camunda
+      - SPRING_DATASOURCE_USERNAME=camunda
+      - SPRING_DATASOURCE_PASSWORD=camunda
+      - CAMUNDA_BPM_RUN_CORS_ENABLED=true
+    volumes:
+      - ../../process-definition:/camunda/configuration/resources
+    expose:
+      - 8080
+    ports:
+      - 8080:8080
+
+  camunda-db:
+    image: postgres:12
+    container_name: camunda-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=camunda
+      - POSTGRES_USER=camunda
+      - POSTGRES_DB=camunda
+    expose:
+      - 5432
+    volumes:
+      - camunda_pgdata:/var/lib/postgresql/data
+    command: postgres
+    
+volumes:
+  camunda_pgdata:
