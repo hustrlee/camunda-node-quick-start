@@ -215,10 +215,10 @@ services:
       - SPRING_DATASOURCE_USERNAME=camunda
       - SPRING_DATASOURCE_PASSWORD=camunda
       - CAMUNDA_BPM_RUN_CORS_ENABLED=true
-    volumes:
-      - ../../process-definition:/camunda/configuration/resources
     expose:
       - 8080
+    ports:
+    	- 8080:8080
 
   camunda-db:
     image: postgres:12
@@ -236,5 +236,342 @@ services:
     
 volumes:
   camunda_pgdata:
+```
+
+
+
+## 工作流引擎的基本概念
+
+流程定义（Process Definition）：用于描述和定义业务逻辑，是流程的一种建模方法。
+
+流程实例（Process Instance）：代表流程定义的执行实例，包括了所有的运行节点。
+
+执行（Execution）：描述流程执行中的每一个节点。
+
+流程变量（Process Variables）：与流程实例相关的数据，可以用于处理流程实例运行时的状态，例如：控制流程的分支、指定活动的执行人等。
+
+
+
+## 流程定义
+
+Camunda BPM 支持 BPMN 2.0 和 CMMN 1.1 流程建模，通常我们使用 BPMN 2.0 规范。
+
+BPMN 2.0 规范使用了 XML 语言来进行建模。为了简化建模，通常使用图形化的建模器。Camunda BPM 提供了 **Modeler** 来支持流程建模。
+
+**Modeler** 会自动检查建模的错误（大多是某些关键属性没有正确设置），并在 **Log** 窗口进行提示。
+
+
+
+### BPMN 的基本元素和建模方法
+
+常用的 BPMN 元素包括：Events、Task、Gateways。
+
+BPMN 流程总是开始于**“开始事件”**，运行一些**“任务”**，根据条件（流程变量）使用**“网关“**来控制下一步执行什么任务，最后结束于**”结束事件“**。
+
+![img](./img/diagram-sample.svg)
+
+详细的建模方法，后续章节再描述。
+
+
+
+### 流程定义关键属性
+
+流程定义有两个必须要设置的关键属性：
+
+- `Id`：必须保证全局唯一。在使用 Modeler 进行建模时，会自动生成一个唯一的 `Id`，可以手动修改。
+- `Name`：建议起一个有意义的名字（可以是中文，不过为了保证兼容性，最好用英语），并保证全局唯一。
+- 可以使用 `Id` 或 `Name` 来启动一个流程实例，通常 `Id` 不容易记忆，`Name` 则是一个有明确意义的名字，因此多用 `Name` 来启动流程实例，而 `Id` 则保持系统建议值。
+
+![image-20201228130445289](/Users/rlee/camunda-node-quick-start/img/process-definition-properties.png)
+
+
+
+### 流程定义的部署
+
+- 开发时，Camunda BPM 可以通过 REST API 来部署流程定义，也可以使用 **Modeler** 来进行部署（本质上，也是 REST API 部署）。
+
+- 对于生产版本，Camunda BPM 还提供了自动部署方式：将待部署的流程定义拷贝到 `configuration/resources/` 目录下，在启动 Camunda BPM Run 时，将自动部署这些流程定义。
+
+- Camunda BPM 支持流程定义版本：同一个名字的流程可以拥有多个版本。执行中的流程实例，可以迁移到新版本；也可以在老版本中运行，直到结束。
+
+
+
+## 流程变量
+
+### 变量的作用域（Scopes）
+
+流程变量有：实例变量（Instance Variables）和本地变量（Local Variables）。
+
+实例变量的作用域是整个流程实例；本地变量的作用域是某个执行（Execution）或者任务（Task）。
+
+本地变量将屏蔽实例变量。
+
+![img](./img/variables-6.png)
+
+
+
+### 变量定义
+
+Camunda BPM 采用了**类型-值（Typed-Value）**方法来定义变量。在 REST API 调用中，变量形式为：
+
+```json
+variableName: {
+  value: variableValue,
+  type: variableType,
+  valueInfo: additionalProperties
+}
+```
+
+
+
+### 变量类型
+
+![img](./img/variables-1.png)
+
+- Camunda BPM 是 Java 应用，因此支持 9 种 Java 的基本类型。
+
+> **注意：**在 REST API 中，变量类型需要首字母大写，例如：`Boolean`
+
+- Camunda BPM 内置了 `File` 类型，可以用于存储文件。
+- 支持**自定义对象类型**。需要通过 Java Class 来支持**自定义对象类型**，因此在 Node.js 开发中，不能使用这种数据类型。
+
+- Java 不支持 json 和 xml 数据类型，只能通过**自定义对象类型**来处理它们。Camunda BPM 已为这两种类型内置了对应的 Java Class，因此可以将这两种类型视为内置类型。
+- 通常情况下，无需指定数据类型（不需要对 `type` 进行赋值），Camunda BPM 会自动推断数据类型。
+  - Javascript 中 date 不是基本的数据类型，而是一个对象，因此 Camunda BPM 不能正确推断该类型。可以用以下的程序片段来处理 `Date` 数据。
+
+```javascript
+const moment = require("moment");
+
+/**
+ * 将 JSON 格式数据转换成 Value_Type 格式数据
+ *
+ * @param {Object} json - JSON 格式数据
+ * @returns {Object} - Value_Type 格式数据
+ */
+const jsonToTypeValue = json => {
+  let res = {};
+
+  for (const key in json) {
+    switch (Object.prototype.toString.call(json[key])) {
+      case "[object Date]":
+        // 是 Date
+        res[key] = {
+          type: "Date",
+          value: moment(json[key])
+            .format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
+            .toString()
+        };
+        break;
+      default:
+        // 其它类型，Camunda 会自动推断类型，指定
+        res[key] = { value: json[key] };
+        break;
+    }
+  }
+
+  return res;
+};
+
+/**
+ * 将 Value_Type 格式数据转换成 JSON 格式数据
+ *
+ * @param {Object} typeValue - Value_Type 格式数据
+ * @returns {Object} - JSON 格式数据
+ */
+const typeValueToJson = typeValue => {
+  let res = {};
+
+  for (const key in typeValue) {
+    switch (typeValue[key].type) {
+      case "Date":
+        res[key] = moment(typeValue[key].value).toDate();
+        break;
+      default:
+        // 其它类型，直接转换为 Javascript 类型
+        res[key] = typeValue[key].value;
+        break;
+    }
+  }
+
+  return res;
+};
+```
+
+> 实际上，`Json` 类型在 Camunda BPM 中的处理比较复杂。
+>
+> - Camunda BPM 使用**序列化格式**（Serialization Format）来处理**自定义对象类型**。当我们指定 `Json` 类型时，Camunda BPM 内置的 **Json Spin** 期望传递一个字符串值，而不是一个 JSON 对象。因此，我们需要用以下的程序片段来使用 `Json` 类型：
+>
+> ```javascript
+>     switch (Object.prototype.toString.call(json[key])) {
+>       case "[object Object]":
+>         // 是 JSON
+>         res[key] = {
+>           type: "Json",
+>           value: JSON.stringify(json[key])
+>         };
+>         break;
+>       default:
+>         // 其它类型，Camunda 会自动推断类型，指定
+>         res[key] = { value: json[key] };
+>         break;
+>     }
+> ```
+>
+> - Node.js 开发中，也可以不用序列化格式来处理 JSON。无需指定 `type`，让 Camunda BPM 自行推断类型，也可以正确处理 JSON 类型！
+
+
+
+## 流程实例
+
+为了方便演示流程实例相关的内容，首先建立一个简单的流程定义：`tutorial-1.bpmn`。
+
+![tutorial-1](/Users/rlee/camunda-node-quick-start/img/tutorial-1.png)
+
+这个流程包括三个元素：
+
+- 开始事件
+- 名为：“观察窗”的用户任务
+- 结束事件
+
+
+
+### 部署流程定义
+
+Camunda BPM 中引入了**“部署”（Deployment）**的概念，即每次部署流程定义的操作称为一次“部署”。
+
+- 一次“部署”可以部署多个流程定义
+- 删除一次“部署”可以一次性删除多个流程定义
+
+使用 [Deployment REST API](https://docs.camunda.org/manual/7.14/reference/rest/deployment/) 来操作“部署”。其中，`create` 命令将执行部署流程定义。
+
+
+
+#### Method
+
+POST /deployment/create
+
+
+
+#### Key Parameters
+
+| Form Part Name  | Content Type              | Description                                          |
+| --------------- | ------------------------- | ---------------------------------------------------- |
+| deployment-name | text/plain                | 本次部署的名字，后续可以用这个名字查询、管理这个部署 |
+| *               | application/octect-stream | 上传的流程定义文件数据流                             |
+
+
+
+#### Response Codes
+
+| Code | Media Type       | Description                  |
+| ---- | ---------------- | ---------------------------- |
+| 200  | application/json | 部署成功                     |
+| 400  | application/json | 部署失败，不能解析 BPMN 文件 |
+
+
+
+#### Examples
+
+```bash
+$ curl -v -F "deployment-name=tutorial" -F bpmn=@tutorial-1.bpmn http://localhost:8080/engine-rest/deployment/create
+{
+	"links": [{
+		"method": "GET",
+		"href": "http://localhost:8080/engine-rest/deployment/15f3facb-48ea-11eb-8760-0242ac120003",
+		"rel": "self"
+	}],
+	"id": "15f3facb-48ea-11eb-8760-0242ac120003",
+	"name": "tutorial",
+	"source": null,
+	"deploymentTime": "2020-12-28T08:52:59.279+0000",
+	"tenantId": null,
+	"deployedProcessDefinitions": {
+		"Process_09ljllk:1:15fc382d-48ea-11eb-8760-0242ac120003": {
+			"id": "Process_09ljllk:1:15fc382d-48ea-11eb-8760-0242ac120003",
+			"key": "Process_09ljllk",
+			"category": "http://bpmn.io/schema/bpmn",
+			"description": null,
+			"name": "tutorial-1",
+			"version": 1,
+			"resource": "tutorial-1.bpmn",
+			"deploymentId": "15f3facb-48ea-11eb-8760-0242ac120003",
+			"diagram": null,
+			"suspended": false,
+			"tenantId": null,
+			"versionTag": null,
+			"historyTimeToLive": null,
+			"startableInTasklist": true
+		}
+	},
+	"deployedCaseDefinitions": null,
+	"deployedDecisionDefinitions": null,
+	"deployedDecisionRequirementsDefinitions": null
+}
+```
+
+
+
+### 使用 Camunda Cockpit 查看/管理流程定义
+
+![image-20201228170343682](./img/cockpit-process.png)
+
+点击流程定义的名字，可以查看流程定义的详情。后续的很多调试工作，也需要在详情页面进行。
+
+![image-20201228170609054](./img/process-definition-detail.png)
+
+
+
+### 使用 Camunda Cockpit 查看/管理部署
+
+![image-20201228170805745](./img/deployments.png)
+
+
+
+### 启动一个流程实例
+
+可以通过流程定义的 `id` 或 `key` 来启动一个流程实例。通常，使用 `key` 来指定流程定义更为方便。
+
+> - `key` 就是流程定义的 `name`。
+> - 使用 `key` 只能启动流程定义的最新版本实例。
+> - 如果要启动流程定义的旧版本实例，只能使用 `id` 的方式来启动
+
+
+
+#### Method
+
+POST /process-definition/key/{key}/start
+
+
+
+#### Key Paraments
+
+##### Path Paraments
+
+| Name | Description    |
+| ---- | -------------- |
+| key  | 流程定义的名字 |
+
+
+
+##### Request Body
+
+| Name      | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| variables | JSON 数据对象。在初始化流程的时候，可以同时初始化流程变量。JSON 中的每个 key 对应了一个流程变量。 |
+
+
+
+#### Key Result
+
+| Name | Value  | Description                                             |
+| ---- | ------ | ------------------------------------------------------- |
+| id   | String | 流程实例的 `id`，全局唯一，通过该 `id` 来引用流程实例。 |
+
+
+
+#### Example
+
+```bash
+$ curl -X POST -H "content-type: application/json" http://localhost:8080/engine-rest/process-definition/key/tutorial-1/start
 ```
 
