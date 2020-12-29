@@ -677,14 +677,79 @@ I[根据条件搜索用户任务] ---> II[通过 UI 来修改流程变量] ---> 
 
 
 
-#### 搜索用户任务
+### 用户任务的执行人（assignee）和候选组（candidateGroup）
+
+**用户任务**必须指定“执行人”。指定执行人的方法包括：
+
+- 在建模时指定，适用于静态分配的情况，例如：所有的合同审批必须由总经理签字，那么这一环节的执行人，在设计时就可以确定（当然，这个案例更好的设计方法是使用“候选组”进行建模，稍后再进行讨论）。静态指定执行人的方案非常不灵活，用得很少。
+- 使用 `POST /task/{id}/assignee` 或 `POST /task/{id}/claim` 命令来指定执行人。`assignee` 不检查任务是否已经被分配；而 `claim` 将检查任务是否已经被分配。这种方案是由用户来指定执行人，通常用于“任务池领取任务”、“管理员分配任务”等业务场景。
+- 通过流程变量来指定执行人：在建模时，可以让“执行人”=“某个流程变量”，或者“执行人”=“某个简单的表达式”。这样就可以通过流程变量来动态指定执行人。通常这种情况下，用户任务前面会有一个 DMN 决策表，或 Service Task，它们通过预先指定的规则，计算出某个流程变量，这样在进入用户任务时，就能自动地、动态地指定执行人。这就实现了“按规则分配任务”的业务场景。
+- 建模时，可以指定候选组，即：哪个或哪几个用户组，可以执行该任务。候选组不能取代执行人，在流程实例中，任务最终还是要分配给某个执行人。例如：
+  - 合同审批必须总经理签字，但是设计时并不知道总经理的 userId。那么，可以指定 `GM` 为该任务的候选组，这样的设计更通用。
+  - “任务池领取任务”业务场景，建模时也应该使用候选组。只要属于候选组的用户，均可以搜索到该任务，然后通过 `claim` 命令，把该任务领取到自己的 userId 下。
+
+
+
+### 搜索用户任务
+
+Camunda BPM 提供了非常强大的搜索功能，可以通过以下的条件进行搜索：
+
+- 任务的责任人（Assignee）
+- 任务的用户组
+- 任务的 id / name
+- 关联的流程实例 id
+- 关联的流程定义 id / name
+- 流程变量
+
+
+
+#### Method
+
+POST /task
+
+
+
+#### Common Parameters
+
+| Name                      | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| processInstanceId         | 在指定 id 的流程实例中搜索                                   |
+| processInstanceIdIn       | 在指定 id 数组的一组流程实例中搜索                           |
+| processDefinitionKey      | 在指定 key 的流程定义中搜索                                  |
+| processDefinitionKeyIn    | 在一组流程定义中搜索                                         |
+| processDefinitionName     | 在指定 name 的流程定义中搜索                                 |
+| processDefinitionNameLike | 模糊匹配流程定义 name                                        |
+| assignee                  | 执行人匹配                                                   |
+| assigneeLike              | 模糊匹配执行人                                               |
+| assigneeIn                | 在一组执行人中匹配                                           |
+| candidateGroup            | 匹配用户组                                                   |
+| candidateGroups           | 匹配一组用户组                                               |
+| assigned                  | 搜索已分配的任务                                             |
+| unassigned                | 搜索未分配的任务                                             |
+| taskDefinitionKey         | 匹配任务 key                                                 |
+| taskDefinitionKeyIn       | 匹配一组任务 key                                             |
+| taskDefinitionKeyLike     | 模糊匹配任务 key                                             |
+| name                      | 匹配任务名称                                                 |
+| nameLike                  | 模糊匹配任务名称                                             |
+| processVariables          | 匹配流程变量，支持逻辑操作，例如：eq、neq、gt、gteq、lt、lteq。多个条件之间是逻辑与关系 |
+| taskVariables             | 匹配任务变量                                                 |
+| orQueries                 | 逻辑或关系查询条件                                           |
+| sorting                   | 结果排序                                                     |
+
+
+
+#### Result
+
+符合条件的 task 数组。
+
+
+
+> 任务搜索支持分页。在分页前，可以使用 `POST /task/count` 命令来获取符合条件的任务数。
 
 
 
 
-
-
-#### 使用 Cockpit 观察用户任务状态
+### 使用 Cockpit 观察用户任务状态
 
 - 点击**用户任务**，可以查看任务详情。
   - 有一个“观察窗任务”在等待用户交互
@@ -694,15 +759,63 @@ I[根据条件搜索用户任务] ---> II[通过 UI 来修改流程变量] ---> 
 
 - 可以查看/管理**用户任务**的**责任人（Assignee）**
 
-![image-20201229133258054](/Users/rlee/Library/Application Support/typora-user-images/image-20201229133258054.png)
 
 
 
 
-
-
-#### 结束一个用户任务
+> **Tips：**用户任务会中断流程实例的运行，等待人机交互。此时，可以通过 Cockpit 观察所有的流程变量。因此，调试时可以在需要的地方插入用户任务，就如同插入断点一样，可以在插入处观察流程变量的值，达到调试流程的目的。
 
 
 
-> **Tips：**用户任务会中断流程实例的运行，等待人机交互。因此，在调试时，插入一些用户任务，就如同插入断点一样，可以在插入处观察流程变量的值，达到调试流程的目的。
+### 修改流程变量
+
+#### Method
+
+POST /task/{id}/variables
+
+
+
+#### Common Parameters
+
+##### Path Parameters
+
+| Name | Description |
+| ---- | ----------- |
+| id   | 任务 id     |
+
+
+
+##### Request Body
+
+| Name          | Description                        |
+| ------------- | ---------------------------------- |
+| modifications | JSON对象。要修改或添加的流程变量。 |
+| deletions     | String 数组。要删除的流程变量。    |
+
+
+
+
+### 结束一个用户任务
+
+#### Method
+
+POST /task/{id}/complete
+
+
+
+#### Common Parameters
+
+##### Path Parameters
+
+| Name | Description |
+| ---- | ----------- |
+| id   | 任务 id     |
+
+
+
+##### Request Body
+
+| Name      | Description                |
+| --------- | -------------------------- |
+| variables | 在任务结束时，设置流程变量 |
+
