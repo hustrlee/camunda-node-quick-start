@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0kxo08j" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.4.0">
-  <bpmn:process id="Process_09ljllk" name="tutorial-1" isExecutable="true">
+  <bpmn:process id="tutorial-1" name="示例流程-1" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_15l0c5n</bpmn:outgoing>
     </bpmn:startEvent>
@@ -15,7 +15,7 @@
     <bpmn:sequenceFlow id="Flow_0mx7wsv" sourceRef="Activity_14l0pup" targetRef="Event_0jayv4u" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_09ljllk">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="tutorial-1">
       <bpmndi:BPMNEdge id="Flow_0mx7wsv_di" bpmnElement="Flow_0mx7wsv">
         <di:waypoint x="370" y="117" />
         <di:waypoint x="432" y="117" />
