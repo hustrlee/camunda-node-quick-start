@@ -4,22 +4,22 @@ const bpmClient = axios.create({
   headers: { "Content-Type": "application/json" }
 });
 
-const msgOpt = {
-  url: "/message",
+const processDefinitionKey = "tutorial-1";
+
+const opt = {
   method: "post",
+  url: `/process-definition/key/${processDefinitionKey}/start`,
   data: {
-    messageName: "msg_add_note",
-    processInstanceId: "ffe4390a-45c6-11eb-86f6-0242ac120002",
-    processVariables: {
-      someText: {
-        value: "第一条实例信息."
+    variables: {
+      info: {
+        value: "第一个示例流程实例。"
       }
     }
   }
 };
 
 bpmClient
-  .request(msgOpt)
+  .request(opt)
   .then(res => {
     console.log(res);
   })

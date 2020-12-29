@@ -8,7 +8,7 @@ Camunda 基于 Java 的 BPM 框架，支持 BPMN（工作流/过程自动化）�
 
 下图展示了 Camunda 中最重要的组件，以及典型的用户角色。
 
-![架构](./img/architecture-overview.png)
+![架构](img/architecture-overview.png)
 
 
 
@@ -39,7 +39,7 @@ Camunda 基于 Java 的 BPM 框架，支持 BPMN（工作流/过程自动化）�
 
 ### 独立的过程引擎服务器（Standalone/Remote Process Engine Server）
 
-![独立的过程引擎服务](./img/standalone-process-engine.png)
+![独立的过程引擎服务](img/standalone-process-engine.png)
 
 **过程引擎**作为一个独立的服务器运行，提供网络服务。远程应用（Node.js 应用）通过 REST API 和过程引擎进行交互。
 
@@ -49,7 +49,7 @@ Camunda 基于 Java 的 BPM 框架，支持 BPMN（工作流/过程自动化）�
 
 **过程引擎**也支持集群部署，每个**过程引擎**实例必须连接到同一个共享的数据库。
 
-![集群模式](./img/clustered-process-engine.png)
+![集群模式](img/clustered-process-engine.png)
 
 
 
@@ -256,33 +256,31 @@ volumes:
 
 Camunda BPM 支持 BPMN 2.0 和 CMMN 1.1 流程建模，通常我们使用 BPMN 2.0 规范。
 
-BPMN 2.0 规范使用了 XML 语言来进行建模。为了简化建模，通常使用图形化的建模器。Camunda BPM 提供了 **Modeler** 来支持流程建模。
-
-**Modeler** 会自动检查建模的错误（大多是某些关键属性没有正确设置），并在 **Log** 窗口进行提示。
+BPMN 2.0 规范使用了 XML 语言来进行建模。为了简化建模，通常使用图形化的建模器。Camunda BPM 提供了 **Modeler** 应用程序来支持流程建模。**Modeler** 会自动检查建模的错误（大多是某些关键属性没有正确设置），并在 **Log** 窗口进行提示。
 
 
 
 ### BPMN 的基本元素和建模方法
 
-常用的 BPMN 元素包括：Events、Task、Gateways。
+常用的 BPMN 元素包括：Events、Tasks、Gateways。
 
-BPMN 流程总是开始于**“开始事件”**，运行一些**“任务”**，根据条件（流程变量）使用**“网关“**来控制下一步执行什么任务，最后结束于**”结束事件“**。
+BPMN 流程总是开始于**“开始事件（Start Event）”**，运行一些**“任务（Task）”**，根据条件（流程变量）使用**“网关（Gateway）“**来控制下一步执行什么任务，最后结束于**”结束事件（End Event）“**。
 
-![img](./img/diagram-sample.svg)
+![img](img/diagram-sample.svg)
 
 详细的建模方法，后续章节再描述。
 
 
 
-### 流程定义关键属性
+### 流程定义的关键属性
 
 流程定义有两个必须要设置的关键属性：
 
 - `Id`：必须保证全局唯一。在使用 Modeler 进行建模时，会自动生成一个唯一的 `Id`，可以手动修改。
-- `Name`：建议起一个有意义的名字（可以是中文，不过为了保证兼容性，最好用英语），并保证全局唯一。
-- 可以使用 `Id` 或 `Name` 来启动一个流程实例，通常 `Id` 不容易记忆，`Name` 则是一个有明确意义的名字，因此多用 `Name` 来启动流程实例，而 `Id` 则保持系统建议值。
+- `Name`：建议起一个有意义的名字（可以是中文）以便于记忆，并保持全局唯一。
+- 需要通过 `Id` 来启动一个流程实例，因此最好设定 `Id`，并起一个有意义的标识符。
 
-![image-20201228130445289](/Users/rlee/camunda-node-quick-start/img/process-definition-properties.png)
+![Process Definition Properties](img/process-definition-properties.png)
 
 
 
@@ -296,17 +294,127 @@ BPMN 流程总是开始于**“开始事件”**，运行一些**“任务”**�
 
 
 
+### 流程定义部署示例
+
+#### 创建示例流程定义
+
+建立一个简单的流程定义：`tutorial-1.bpmn`。
+
+这个流程包括三个元素：
+
+- 开始事件
+- 名为：“观察窗”的用户任务
+- 结束事件
+
+![tutorial-1](/Users/rlee/camunda-node-quick-start/img/tutorial-1.png)
+
+
+
+#### 使用 REST API 部署 `tutorial-1` 流程定义
+
+Camunda BPM 中引入了**“部署”（Deployment）**的概念，即每次部署流程定义的操作称为一次“部署”。
+
+- 一次“部署”可以部署多个流程定义
+- 删除一次“部署”可以一次性删除多个流程定义
+
+使用 `/deployment/create` 命令将执行部署流程定义。
+
+
+
+##### Method
+
+POST /deployment/create
+
+
+
+##### Common Parameters
+
+| Form Part Name  | Content Type              | Description                                          |
+| --------------- | ------------------------- | ---------------------------------------------------- |
+| deployment-name | text/plain                | 本次部署的名字，后续可以用这个名字查询、管理这个部署 |
+| *               | application/octect-stream | 上传的流程定义文件数据流                             |
+
+
+
+##### Response Codes
+
+| Code | Media Type       | Description                  |
+| ---- | ---------------- | ---------------------------- |
+| 200  | application/json | 部署成功                     |
+| 400  | application/json | 部署失败，不能解析 BPMN 文件 |
+
+
+
+##### Examples
+
+```bash
+$ curl -v -F "deployment-name=tutorial" -F bpmn=@tutorial-1.bpmn http://localhost:8080/engine-rest/deployment/create
+{
+	"links": [{
+		"method": "GET",
+		"href": "http://localhost:8080/engine-rest/deployment/15f3facb-48ea-11eb-8760-0242ac120003",
+		"rel": "self"
+	}],
+	"id": "15f3facb-48ea-11eb-8760-0242ac120003",
+	"name": "tutorial",
+	"source": null,
+	"deploymentTime": "2020-12-28T08:52:59.279+0000",
+	"tenantId": null,
+	"deployedProcessDefinitions": {
+		"tutorial-1:1:15fc382d-48ea-11eb-8760-0242ac120003": {
+			"id": "tutorial-1:1:15fc382d-48ea-11eb-8760-0242ac120003",
+			"key": "tutorial-1",
+			"category": "http://bpmn.io/schema/bpmn",
+			"description": null,
+			"name": "示例流程-1",
+			"version": 1,
+			"resource": "tutorial-1.bpmn",
+			"deploymentId": "15f3facb-48ea-11eb-8760-0242ac120003",
+			"diagram": null,
+			"suspended": false,
+			"tenantId": null,
+			"versionTag": null,
+			"historyTimeToLive": null,
+			"startableInTasklist": true
+		}
+	},
+	"deployedCaseDefinitions": null,
+	"deployedDecisionDefinitions": null,
+	"deployedDecisionRequirementsDefinitions": null
+}
+```
+
+
+
+### 使用 Cockpit 查看/管理流程定义
+
+![Process Definition List](img/process-definition-list.png)
+
+点击流程定义的名字，可以查看流程定义的详情。后续的很多调试工作，也需要在详情页面进行。
+
+![Process Definition Detail](img/process-definition-detail.png)
+
+
+
+### 使用 Cockpit 查看/管理部署
+
+![Deployments](img/deployments.png)
+
+
+
+
+
 ## 流程变量
 
 ### 变量的作用域（Scopes）
 
-流程变量有：实例变量（Instance Variables）和本地变量（Local Variables）。
+- 流程变量分为：实例变量（Instance Variables）和本地变量（Local Variables）。
 
-实例变量的作用域是整个流程实例；本地变量的作用域是某个执行（Execution）或者任务（Task）。
+- 实例变量的作用域是整个流程实例；本地变量的作用域是某个执行（Execution）或者任务（Task）。
 
-本地变量将屏蔽实例变量。
+- 本地变量将屏蔽实例变量。
 
-![img](./img/variables-6.png)
+![img](img/variables-6.png)
 
 
 
@@ -326,7 +434,7 @@ variableName: {
 
 ### 变量类型
 
-![img](./img/variables-1.png)
+![img](img/variables-1.png)
 
 - Camunda BPM 是 Java 应用，因此支持 9 种 Java 的基本类型。
 
@@ -423,116 +531,13 @@ const typeValueToJson = typeValue => {
 
 ## 流程实例
 
-为了方便演示流程实例相关的内容，首先建立一个简单的流程定义：`tutorial-1.bpmn`。
-
-![tutorial-1](/Users/rlee/camunda-node-quick-start/img/tutorial-1.png)
-
-这个流程包括三个元素：
-
-- 开始事件
-- 名为：“观察窗”的用户任务
-- 结束事件
-
-
-
-### 部署流程定义
-
-Camunda BPM 中引入了**“部署”（Deployment）**的概念，即每次部署流程定义的操作称为一次“部署”。
-
-- 一次“部署”可以部署多个流程定义
-- 删除一次“部署”可以一次性删除多个流程定义
-
-使用 [Deployment REST API](https://docs.camunda.org/manual/7.14/reference/rest/deployment/) 来操作“部署”。其中，`create` 命令将执行部署流程定义。
-
-
-
-#### Method
-
-POST /deployment/create
-
-
-
-#### Key Parameters
-
-| Form Part Name  | Content Type              | Description                                          |
-| --------------- | ------------------------- | ---------------------------------------------------- |
-| deployment-name | text/plain                | 本次部署的名字，后续可以用这个名字查询、管理这个部署 |
-| *               | application/octect-stream | 上传的流程定义文件数据流                             |
-
-
-
-#### Response Codes
-
-| Code | Media Type       | Description                  |
-| ---- | ---------------- | ---------------------------- |
-| 200  | application/json | 部署成功                     |
-| 400  | application/json | 部署失败，不能解析 BPMN 文件 |
-
-
-
-#### Examples
-
-```bash
-$ curl -v -F "deployment-name=tutorial" -F bpmn=@tutorial-1.bpmn http://localhost:8080/engine-rest/deployment/create
-{
-	"links": [{
-		"method": "GET",
-		"href": "http://localhost:8080/engine-rest/deployment/15f3facb-48ea-11eb-8760-0242ac120003",
-		"rel": "self"
-	}],
-	"id": "15f3facb-48ea-11eb-8760-0242ac120003",
-	"name": "tutorial",
-	"source": null,
-	"deploymentTime": "2020-12-28T08:52:59.279+0000",
-	"tenantId": null,
-	"deployedProcessDefinitions": {
-		"Process_09ljllk:1:15fc382d-48ea-11eb-8760-0242ac120003": {
-			"id": "Process_09ljllk:1:15fc382d-48ea-11eb-8760-0242ac120003",
-			"key": "Process_09ljllk",
-			"category": "http://bpmn.io/schema/bpmn",
-			"description": null,
-			"name": "tutorial-1",
-			"version": 1,
-			"resource": "tutorial-1.bpmn",
-			"deploymentId": "15f3facb-48ea-11eb-8760-0242ac120003",
-			"diagram": null,
-			"suspended": false,
-			"tenantId": null,
-			"versionTag": null,
-			"historyTimeToLive": null,
-			"startableInTasklist": true
-		}
-	},
-	"deployedCaseDefinitions": null,
-	"deployedDecisionDefinitions": null,
-	"deployedDecisionRequirementsDefinitions": null
-}
-```
-
-
-
-### 使用 Camunda Cockpit 查看/管理流程定义
-
-![image-20201228170343682](./img/cockpit-process.png)
-
-点击流程定义的名字，可以查看流程定义的详情。后续的很多调试工作，也需要在详情页面进行。
-
-![image-20201228170609054](./img/process-definition-detail.png)
-
-
-
-### 使用 Camunda Cockpit 查看/管理部署
-
-![image-20201228170805745](./img/deployments.png)
-
-
-
 ### 启动一个流程实例
 
 可以通过流程定义的 `id` 或 `key` 来启动一个流程实例。通常，使用 `key` 来指定流程定义更为方便。
 
-> - `key` 就是流程定义的 `name`。
-> - 使用 `key` 只能启动流程定义的最新版本实例。
+> - 这里的 `id` 是部署时返回的流程定义部署 `id`，可以通过部署查询命令来查询。
+> - 这里的 `key` 就是流程定义建模时设定的 `Id`，如“流程定义”一节所述，最好给流程定义设定一个有明确意义的 `Id`，以方便记忆。
+> - 使用 `key` 启动流程定义的最新版本实例。
 > - 如果要启动流程定义的旧版本实例，只能使用 `id` 的方式来启动
 
 
@@ -543,13 +548,13 @@ POST /process-definition/key/{key}/start
 
 
 
-#### Key Paraments
+#### Common Paraments
 
 ##### Path Paraments
 
-| Name | Description    |
-| ---- | -------------- |
-| key  | 流程定义的名字 |
+| Name | Description     |
+| ---- | --------------- |
+| key  | 流程定义的 `Id` |
 
 
 
@@ -557,7 +562,7 @@ POST /process-definition/key/{key}/start
 
 | Name      | Description                                                  |
 | --------- | ------------------------------------------------------------ |
-| variables | JSON 数据对象。在初始化流程的时候，可以同时初始化流程变量。JSON 中的每个 key 对应了一个流程变量。 |
+| variables | JSON 数据对象。在初始化流程的时候，可以同时初始化流程变量。JSON 中的每个键对应了一个流程变量。 |
 
 
 
@@ -571,7 +576,133 @@ POST /process-definition/key/{key}/start
 
 #### Example
 
+- 使用 `curl` 启动一个流程实例，并添加一个流程变量 `info`。
+
 ```bash
-$ curl -X POST -H "content-type: application/json" http://localhost:8080/engine-rest/process-definition/key/tutorial-1/start
+$ curl -X POST -H "content-type: application/json" http://localhost:8080/engine-rest/process-definition/key/tutorial-1/start -d '{ "variables": { "info": { "value": "第一个示例流程实例。" } } }'
+{
+  "links": [
+    {
+      "method": "GET",
+      "href": "http://localhost:8080/engine-rest/process-instance/30fa4a08-4981-11eb-9728-0242ac120002",
+      "rel": "self"
+    }
+  ],
+  "id": "30fa4a08-4981-11eb-9728-0242ac120002",
+  "definitionId": "tutorial-1:1:11d23e49-497e-11eb-9728-0242ac120002",
+  "businessKey": null,
+  "caseInstanceId": null,
+  "ended": false,
+  "suspended": false,
+  "tenantId": null
+}
 ```
 
+- 使用 Node.js 启动一个流程实例
+
+```javascript
+const axios = require("axios");
+const bpmClient = axios.create({
+  baseURL: "http://localhost:8080/engine-rest",
+  headers: { "Content-Type": "application/json" }
+});
+
+const processDefinitionKey = "tutorial-1";
+
+const opt = {
+  method: "post",
+  url: `/process-definition/key/${processDefinitionKey}/start`,
+  data: {
+    variables: {
+      info: {
+        value: "第一个示例流程实例。"
+      }
+    }
+  }
+};
+
+bpmClient
+  .request(opt)
+  .then(res => {
+    console.log(res);
+  })
+  .catch(err => {
+    console.log(err.message);
+  });
+```
+
+> 后面的例子中，如无必要，将只给出常数 `opt` 的定义。
+
+
+
+### 使用 Cockpit 查看/管理流程实例
+
+- Cockpit 首页可以查看有多少个正在运行的流程实例。
+
+![Cockpit Home Page](img/cockpit-home-page.png)
+
+- Cockpit 流程定义页面可以查看每个流程定义开启了多少个流程实例。
+
+![Process Definition List 2](img/process-definition-list-2.png)
+
+- 点击流程定义名字，可以查看流程实例列表。
+
+![Process Definition Detail 2](img/process-definition-detail-2.png)
+
+- 点击流程实例 id，可以查看流程实例详情。
+
+![流程实例详情](img/process-instance-detail.png)
+
+
+
+### 流程实例的运行和结束
+
+- 流程实例由一系列**任务（Task）**组成。当一个**任务**完成时，会根据流程设计自动流转到下一个任务。
+- 任务分为两大类：**用户任务（User Task）**和其它。
+  - 其它任务在结束时，会自动完成当前任务，工作流引擎推动流程流转到下一个任务。
+  - **用户任务**必须调用**任务结束 API**，来通知工作流引擎当前任务已结束，并流转到下一个任务。
+- 当所有的任务都完成时，整个流程实例将结束，工作流引擎会将其保存到 `history` 中。可以通过 `hisotry` REST API 来查询历史实例。 
+
+
+
+
+### 用户任务的交互模型
+
+**用户任务（User Task）**是需要“人”参与的任务，“人（用户）”通过 UI 界面与工作流引擎进行交互。基本的交互模型如下：
+
+```mermaid
+graph LR
+I[根据条件搜索用户任务] ---> II[通过 UI 来修改流程变量] ---> III[结束用户任务]
+```
+
+
+
+#### 搜索用户任务
+
+
+
+
+
+
+#### 使用 Cockpit 观察用户任务状态
+
+- 点击**用户任务**，可以查看任务详情。
+  - 有一个“观察窗任务”在等待用户交互
+  - 没有给**用户任务**添加 Local Variables，但是 Instance Variables 在用户任务中是可以访问的
+
+![用户任务详情](img/task-detail-1.png)
+
+- 可以查看/管理**用户任务**的**责任人（Assignee）**
+
+![image-20201229133258054](/Users/rlee/Library/Application Support/typora-user-images/image-20201229133258054.png)
+
+
+
+
+
+
+#### 结束一个用户任务
+
+
+
+> **Tips：**用户任务会中断流程实例的运行，等待人机交互。因此，在调试时，插入一些用户任务，就如同插入断点一样，可以在插入处观察流程变量的值，达到调试流程的目的。
