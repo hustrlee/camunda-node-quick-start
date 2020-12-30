@@ -136,11 +136,11 @@ Camunda 官方文档公布支持的数据库：
 ```yaml
 version: "3.8"
 services:
-	camunda-db:
-		image: postgres:12.2
-		container_name: camunda-db
-		environment:
-			- POSTGRES_PASSWORD=camunda
+  camunda-db:
+    image: postgres:12.2
+    container_name: camunda-db
+    environment:
+      - POSTGRES_PASSWORD=camunda
       - POSTGRES_USER=camunda
       - POSTGRES_DB=camunda
     expose:
@@ -150,7 +150,7 @@ services:
     command: postgres
 
 volumes:
-	camunda_pgdata:
+  camunda_pgdata:
 ```
 
 
@@ -170,7 +170,7 @@ volumes:
 
 ```yaml
 ...
-		environment:
+    environment:
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
       - SPRING_DATASOURCE_URL=jdbc:postgresql://camunda-db:5432/camunda
       - SPRING_DATASOURCE_USERNAME=camunda
@@ -199,9 +199,9 @@ volumes:
 
 ```yaml
 ...
-		environment:
-			...
-			- CAMUNDA_BPM_RUN_CORS_ENABLED=true
+    environment:
+      ...
+      - CAMUNDA_BPM_RUN_CORS_ENABLED=true
 ```
 
 
@@ -322,7 +322,7 @@ BPMN 流程总是开始于**“开始事件（Start Event）”**，运行一些
 - 名为：“观察窗”的用户任务
 - 结束事件
 
-![tutorial-1](/Users/rlee/camunda-node-quick-start/img/tutorial-1.png)
+![tutorial-1](img/tutorial-1.png)
 
 
 
@@ -438,7 +438,7 @@ $ curl -v -F "deployment-name=tutorial" -F bpmn=@tutorial-1.bpmn http://localhos
 
 Camunda BPM 采用了**类型-值（Typed-Value）**方法来定义变量。在 REST API 调用中，变量形式为：
 
-```json
+```
 variableName: {
   value: variableValue,
   type: variableType,
