@@ -1,5 +1,13 @@
 # Camunda BPM 的 Node.js 开发快速指南
 
+## Camunda BPM 官方文档
+
+- [Get Started](https://docs.camunda.org/get-started/)
+- [REST API Reference](https://docs.camunda.org/manual/7.14/reference/rest/)
+- [BPMN 2.0 Tutorial](https://camunda.com/bpmn/)
+- [BPMN 2.0 Reference](https://docs.camunda.org/manual/7.14/reference/bpmn20/)
+- [User Guide](https://docs.camunda.org/manual/7.14/user-guide/)
+
 
 
 ## Camunda BPM 概述
@@ -76,7 +84,7 @@ docker run -d --name camunda -p 8080:8080 camunda/camunda-platform:run-latest
 部署成功后，可以通过：
 
 - http://localhost:8080/camunda/app/ 来访问 Camunda webapps（Cockpit，Tasklist，Admin）
-- http://localhost:8080/engine-rest/engine 来访问 REST API
+- http://localhost:8080/engine-rest/ 来访问 REST API
 
 - 默认的用户名/密码：demo/demo
 
@@ -236,6 +244,14 @@ services:
     
 volumes:
   camunda_pgdata:
+```
+
+
+
+启动命令：
+
+```bash
+docker-compose up -d
 ```
 
 
@@ -408,7 +424,7 @@ $ curl -v -F "deployment-name=tutorial" -F bpmn=@tutorial-1.bpmn http://localhos
 
 ### 变量的作用域（Scopes）
 
-- 流程变量分为：实例变量（Instance Variables）和本地变量（Local Variables）。
+- 流程变量分为：实例变量（Process Variables）和本地变量（Local Variables）。
 
 - 实例变量的作用域是整个流程实例；本地变量的作用域是某个执行（Execution）或者任务（Task）。
 
@@ -682,7 +698,7 @@ I[根据条件搜索用户任务] ---> II[通过 UI 来修改流程变量] ---> 
 **用户任务**必须指定“执行人”。指定执行人的方法包括：
 
 - 在建模时指定，适用于静态分配的情况，例如：所有的合同审批必须由总经理签字，那么这一环节的执行人，在设计时就可以确定（当然，这个案例更好的设计方法是使用“候选组”进行建模，稍后再进行讨论）。静态指定执行人的方案非常不灵活，用得很少。
-- 使用 `POST /task/{id}/assignee` 或 `POST /task/{id}/claim` 命令来指定执行人。`assignee` 不检查任务是否已经被分配；而 `claim` 将检查任务是否已经被分配。这种方案是由用户来指定执行人，通常用于“任务池领取任务”、“管理员分配任务”等业务场景。
+- 使用 `POST /task/{id}/assigne` 或 `POST /task/{id}/claim` 命令来指定执行人。`assignee` 不检查任务是否已经被分配；而 `claim` 将检查任务是否已经被分配。这种方案是由用户来指定执行人，通常用于“任务池领取任务”、“管理员分配任务”等业务场景。
 - 通过流程变量来指定执行人：在建模时，可以让“执行人”=“某个流程变量”，或者“执行人”=“某个简单的表达式”。这样就可以通过流程变量来动态指定执行人。通常这种情况下，用户任务前面会有一个 DMN 决策表，或 Service Task，它们通过预先指定的规则，计算出某个流程变量，这样在进入用户任务时，就能自动地、动态地指定执行人。这就实现了“按规则分配任务”的业务场景。
 - 建模时，可以指定候选组，即：哪个或哪几个用户组，可以执行该任务。候选组不能取代执行人，在流程实例中，任务最终还是要分配给某个执行人。例如：
   - 合同审批必须总经理签字，但是设计时并不知道总经理的 userId。那么，可以指定 `GM` 为该任务的候选组，这样的设计更通用。
@@ -759,7 +775,7 @@ POST /task
 
 - 可以查看/管理**用户任务**的**责任人（Assignee）**
 
-
+![用户任务详情](img/task-detail-2.png)
 
 
 
@@ -818,4 +834,142 @@ POST /task/{id}/complete
 | Name      | Description                |
 | --------- | -------------------------- |
 | variables | 在任务结束时，设置流程变量 |
+
+
+
+## 关于流程变量的进阶讨论
+
+### JSON 类型的流程变量
+
+可以使用两种方式添加/修改 JSON 类型的流程变量：使用/不是 Camunda Spin plugin
+
+```javascript
+const Json = {
+  aString: "这是一个字符串",
+  aNumber: 100,
+  aBoolean: true
+};
+
+const taskId = "42f4d5d5-4982-11eb-9728-0242ac120002"; // 请根据实际情况修改taskId
+const opt = {
+  method: "post",
+  url: `/task/${taskId}/variables`,
+  data: {
+    modifications: {
+      aJson: {
+        value: JSON.stringify(Json),
+        type: "Json"
+      },
+      anotherJson: {
+        value: Json
+      }
+    }
+  }
+};
+```
+
+在 Cockpit 中观察两种方式添加的 JSON 变量，可以看到：
+
+- 指定 `Json` 类型，被 Camunda 识别为 `Json`，并以 JSON 的形式显示。
+- 没有指定 `Json` 类型，被 Camunda 自动推断为 `LinkedHashMap` 类型。
+
+![JSON](img/json-variables.png)
+
+点击 `java.util.LinkedHashMap` 可以显示变量的内容：**“Serialized”** 格式的内容是真正存储在数据库中的内容，是无法直接阅读的；**"Deserialized"** 格式的内容是通过 Camunda 中对应的 "Serializer" 解码后的内容，是可以阅读的。
+
+![JSON Serialized](img/json-variable-serialized.png)
+
+![JSON Deserialized](img/json-variable-deserialized.png)
+
+
+
+> Node.js 应用中暂时没发现这两种方式有什么区别。
+
+
+
+### Array 类型的变量
+
+可以直接添加/修改 Array 类型变量，无需指定类型，让 Camunda 自行推断就好。Camunda 中会将 Array 映射成 `java.util.ArrayList` 对象进行 **"Serialized"** 存储。
+
+```javascript
+const array = [1, 1, 2, 3, 5, "斐波那契数列"];
+
+const taskId = "42f4d5d5-4982-11eb-9728-0242ac120002"; // 请根据实际情况修改taskId
+const opt = {
+  method: "post",
+  url: `/task/${taskId}/variables`,
+  data: {
+    modifications: {
+      aArray: {
+        value: array
+      }
+    }
+  }
+};
+```
+
+![Array Variables](img/array-variables.png)
+
+
+
+### File 类型的变量
+
+Camunda 提供了文件上传、下载的能力。
+
+#### 上传一个文件
+
+上传一个文件，就是添加一个文件类型的变量，该变量需要设定以下内容：
+
+| Name      | Field    | Description                                                  |
+| --------- | -------- | ------------------------------------------------------------ |
+| value     |          | String 类型，将文件内容（Binary）进行 Base64 编码。注意：如果上传的是图片文件，不能添加诸如 `data:img/jpg;base64,` 的头部，而是直接将文件进行 Base64 编码。 |
+| type      |          | `"File"`                                                     |
+| valueInfo |          | 需要设定三个字段                                             |
+|           | filename | 下载时使用的文件名，不是变量名。不能使用中文，Camunda 尚不能正确处理中文文件名。 |
+|           | mimetype | 文件的 MIME 类型。HTTP 标准中规定的媒体类型，例如：`text/plain`、`img/jpg` 等。 |
+|           | encoding | 文本文件的编码类型，例如："UTF-8"。                          |
+
+##### Example
+
+```javascript
+const text = "5paH5pys5paH5Lu256S65L6L44CC"; // "文本文件示例。"的 Base64 编码
+const taskId = "42f4d5d5-4982-11eb-9728-0242ac120002"; // 请根据实际情况修改taskId
+const opt = {
+  method: "post",
+  url: `/task/${taskId}/variables`,
+  data: {
+    modifications: {
+      aFile: {
+        value: text,
+        type: "File",
+        valueInfo: {
+          filename: "textFile.txt",
+          mimetype: "text/plain",
+          encoding: "UTF-8"
+        }
+      }
+    }
+  }
+};
+```
+
+![File Variable](img/file-variables.png)
+
+
+
+#### 下载一个文件
+
+Camunda 中，文件变量会以文件的形式存储在服务器上，可以直接下载，下载地址为：`GET /task/{id}/variables/{varName}/data`
+
+##### Example
+
+```http
+http://localhost:8080/engine-rest/task/42f4d5d5-4982-11eb-9728-0242ac120002/variables/aFile/data
+```
+
+
+
+## 常用的 BPMN 建模元素及方法
+
+
 
