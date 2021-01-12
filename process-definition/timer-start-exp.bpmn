@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1ht3lxh" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.4.0">
+  <bpmn:process id="timer-start-exp" name="定时启动实验" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_09jyyjx</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0en30eq">
+        <bpmn:timeDate xsi:type="bpmn:tFormalExpression">2021-01-12T15:37:40+08</bpmn:timeDate>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_09jyyjx" sourceRef="StartEvent_1" targetRef="Activity_177iouc" />
+    <bpmn:userTask id="Activity_177iouc">
+      <bpmn:incoming>Flow_09jyyjx</bpmn:incoming>
+      <bpmn:outgoing>Flow_1mgeayt</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_0xjux4a">
+      <bpmn:incoming>Flow_1mgeayt</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1mgeayt" sourceRef="Activity_177iouc" targetRef="Event_0xjux4a" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="timer-start-exp">
+      <bpmndi:BPMNEdge id="Flow_1mgeayt_di" bpmnElement="Flow_1mgeayt">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="432" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09jyyjx_di" bpmnElement="Flow_09jyyjx">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0tg7ls1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="176" y="142" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0xda4s3_di" bpmnElement="Activity_177iouc">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0xjux4a_di" bpmnElement="Event_0xjux4a">
+        <dc:Bounds x="432" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
