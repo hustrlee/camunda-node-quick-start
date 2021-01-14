@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1brn09y" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.4.0">
+  <bpmn:process id="usertask-exp" name="用户任务实验" isExecutable="true">
+    <bpmn:userTask id="usertask1" name="用户任务" camunda:candidateUsers="kermit, gonzo" camunda:candidateGroups="management, accountancy">
+      <bpmn:incoming>Flow_1ffp2zg</bpmn:incoming>
+      <bpmn:outgoing>Flow_1snqft5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:startEvent id="Event_0wfru3d">
+      <bpmn:outgoing>Flow_1ffp2zg</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1ffp2zg" sourceRef="Event_0wfru3d" targetRef="usertask1" />
+    <bpmn:endEvent id="Event_1t7v5im">
+      <bpmn:incoming>Flow_1snqft5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1snqft5" sourceRef="usertask1" targetRef="Event_1t7v5im" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="usertask-exp">
+      <bpmndi:BPMNEdge id="Flow_1snqft5_di" bpmnElement="Flow_1snqft5">
+        <di:waypoint x="400" y="120" />
+        <di:waypoint x="482" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ffp2zg_di" bpmnElement="Flow_1ffp2zg">
+        <di:waypoint x="218" y="120" />
+        <di:waypoint x="300" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_001u3po_di" bpmnElement="usertask1">
+        <dc:Bounds x="300" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0wfru3d_di" bpmnElement="Event_0wfru3d">
+        <dc:Bounds x="182" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1t7v5im_di" bpmnElement="Event_1t7v5im">
+        <dc:Bounds x="482" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
