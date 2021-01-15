@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1brn09y" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.4.0">
   <bpmn:process id="usertask-exp" name="用户任务实验" isExecutable="true">
-    <bpmn:userTask id="usertask1" name="用户任务" camunda:candidateUsers="kermit, gonzo" camunda:candidateGroups="management, accountancy">
+    <bpmn:userTask id="usertask1" name="用户任务" camunda:assignee="${starter}">
       <bpmn:incoming>Flow_1ffp2zg</bpmn:incoming>
       <bpmn:outgoing>Flow_1snqft5</bpmn:outgoing>
     </bpmn:userTask>

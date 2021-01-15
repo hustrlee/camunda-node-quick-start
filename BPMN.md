@@ -81,13 +81,18 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 
 ## 用户任务
 
-**用户任务**是对由人完成的活动进行建模。
+**用户任务**是对由人完成的活动进行建模。人通过应用系统与工作流引擎进行交互，完成：
+
+- 用户任务的搜索
+- 用户任务的认领
+- 修改流程变量
+- 用户任务的完成
 
 
 
 ### 任务分配
 
-既然是由人完成的任务，首先要解决**“该任务由谁来完成”**。
+既然是由人完成的任务，首先要解决**“该任务由谁来完成”**。Camunda BPM 对 BPMN 的用户分配建模方法进行了扩展，引入了**执行人（Assignee）**、**候选人（Candiate Users）**、**候选组（Candiate Groups）**的概念。
 
 
 
@@ -109,7 +114,7 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 
 
 
-> **注意：**Camunda BPM 对 BPMN 的用户分配建模方法进行了扩展，引入了**执行人（Assignee）**、**候选人（Candiate Users）**、**候选组（Candiate Groups）**的概念。在使用 Camunda Modeler 进行建模时，才可以直接设置以上属性。而使用其它建模软件时，则没有上述属性设置，只能通过修改 .bpmn 文件来设置这些属性。
+> **注意：**在使用 Camunda Modeler 进行建模时，才可以直接设置以上属性。而使用其它建模软件时，则没有上述属性设置，只能通过修改 .bpmn 文件来设置这些属性。
 
 
 
@@ -120,6 +125,170 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 
 
 ### 任务的动态分配
+
+静态任务分配很多时候并不能满足业务逻辑要求。例如：
+
+- 在设计流程时不知道执行人或候选人/组的确切名称
+- 执行人不是一个确定值，而是取决于诸如“启动流程的人”之类的数据
+- 任务分配逻辑可能很复杂，甚至需要访问外部数据源以实现查找，例如：“启动流程的员工的经理”
+
+在 Node.js 开发中，可以使用过程变量来进行任务分配。
+
+
+
+#### 示例 - 使用过程变量分配用户任务
+
+建立以下的流程：
+
+<img src="img/BPMN/user-task-exp-1.png" style="zoom:35%; float:left;" />
+
+对 `usertask1` 做以下设置：
+
+<img src="img/BPMN/user-task-exp-2.png" style="zoom:50%; float:left;" />
+
+启动流程时，初始化 `starter` 流程变量，流程引擎会自动将 `usertask1` 分配给 “starter”。
+
+```bash
+curl -X POST -H "content-type: application/json" http://localhost:8080/engine-rest/process-definition/key/usertask-exp/start -d '{ "variables": { "starter": { "value": "kermit" } } }'
+```
+
+启动流程后，可以在 Cockpit 中进行观察：
+
+![image-20210115114847984](img/BPMN/user-task-exp-3.png)
+
+![image-20210115115012464](img/BPMN/user-task-exp-4.png)
+
+
+
+> 在引用流程变量 `starter` 时，使用的语法是：`${starter}`。事实上，并不能直接将流程变量赋值给“执行人”，只能使用**表达式**。Camunda BPM 支持 EL（Unified Expression Language，统一表达语言）。EL 是 JSP 2.1 规范的一部分，可以参考[EL 官方文档](https://docs.oracle.com/javaee/5/tutorial/doc/bnahq.html)。
+
+
+
+### 用户任务的搜索
+
+使用 API：[`POST /task`](https://docs.camunda.org/manual/latest/reference/rest/task/post-query/) 可以根据**执行人**、**候选用户**、**候选组**、**流程变量**等等条件综合搜索与自己相关的任务列表。如果任务列表很长，需要分页，可以先使用 API：[`POST /task/count`](https://docs.camunda.org/manual/latest/reference/rest/task/post-query-count/) 获取列表的长度。
+
+
+
+### 用户任务的认领
+
+在建模时，如果仅指定了”候选人/候选组“，那么相关人员都可以搜索到该任务。但是，同一任务不应该由多个人员同时操作，这将导致不可控的操作结果。因此，在操作用户任务前（修改流程变量前），应先将该任务认领到自己的名下，即设定执行人为自己。使用以下 API 可以完成认领操作：
+
+- [`POST /task/{id}/claim`](https://docs.camunda.org/manual/latest/reference/rest/task/post-claim/)
+- [`POST /task/{id}/assignee`](https://docs.camunda.org/manual/latest/reference/rest/task/post-assignee/)
+
+这两个认领操作的区别是：
+
+- `claim` 将检查该任务是否已经分配了执行人。适用于对“任务池抢单”分配模式的建模。
+-  `assignee` 不执行这一检查，直接认领任务。适用于“管理员指定”分配模式的建模。
+
+
+
+#### 示例 - 使用 `claim` 认领任务
+
+在**”示例 - 使用过程变量分配用户任务“**启动后，执行以下命令：
+
+```bash
+curl -i -X POST -H "content-type: application/json" http://localhost:8080/engine-rest/task/2b0cb01b-56f5-11eb-83d8-0242ac120002/claim -d '{ "userId": "aUserId" }'
+```
+
+由于任务已经分配给了 `kermit`，因此会得到以下的响应：
+
+```bash
+HTTP/1.1 500
+Access-Control-Allow-Origin: *
+Content-Type: application/json
+Content-Length: 130
+Date: Fri, 15 Jan 2021 05:56:29 GMT
+Connection: close
+
+{"type":"TaskAlreadyClaimedException","message":"Task '2b0cb01b-56f5-11eb-83d8-0242ac120002' is already claimed by someone else."}
+```
+
+返回码为 `500`，并指出“该任务已经被分配给其他人”，认领不成功。
+
+
+
+#### 示例 - 使用 `assignee` 认领任务
+
+接着执行以下命令：
+
+```bash
+curl -i -X POST -H "content-type: application/json" http://localhost:8080/engine-rest/task/2b0cb01b-56f5-11eb-83d8-0242ac120002/assignee -d '{ "userId": "aUserId" }'
+```
+
+强制认领任务后，得到以下响应：
+
+```bash
+HTTP/1.1 204
+Access-Control-Allow-Origin: *
+Date: Fri, 15 Jan 2021 06:04:38 GMT
+```
+
+返回码为 `204`，表示认领成功。
+
+![image-20210115140625032](/Users/rlee/camunda-node-quick-start/img/BPMN/user-task-exp-5.png)
+
+
+
+#### 取消认领
+
+使用 API：[`POST /task/{id}/unclaim`](https://docs.camunda.org/manual/latest/reference/rest/task/post-unclaim/) 将任务的执行人清空。
+
+
+
+### 流程变量的更新
+
+使用 API：[`POST /task/{id}/variables`](https://docs.camunda.org/manual/latest/reference/rest/task/variables/post-modify-task-variables/) 可以添加、编辑、删除流程变量。
+
+### 用户任务的结束
+
+使用 API：[`POST /task/{id}/complete`](https://docs.camunda.org/manual/latest/reference/rest/task/post-complete/) 可以结束当前用户任务，并更新流程变量。
+
+
+
+## 服务任务
+
+**服务任务**是对由计算机系统完成的活动进行建模。
+
+Camunda BPM 支持 5 种服务的实现方式，Node.js 开发中，使用 **外部任务（External Tasks）**模式来实现服务。外部任务在概念上与用户任务非常相似，作为普通开发者可以将其类比于用户任务来考虑：
+
+- 用户任务由流程引擎创建，并添加到任务列表中；“人”查询任务列表，并声明该任务的执行人；完成任务后向流程引擎声明任务完成，流程引擎推动流程继续。
+- 外部任务由流程引擎创建，并添加到**主题（Topic）**列表中；外部应用程序查询主题，并锁定该主题；完成任务后，外部应用程序向流程引擎声明任务完成，流程引擎推动流程继续。
+
+> 外部任务采用了**长轮询（Long Polling）**的机制，来减少请求数量，提高服务器和客户端资源的利用效率。关于 Camunda BPM 实现外部服务的细节，可以参考[官方文档 - External Tasks](https://docs.camunda.org/manual/latest/user-guide/process-engine/external-tasks/)。
+
+
+
+### 使用 Node.js 开发外部服务
+
+对于 Node.js 开发者，Camunda BPM 官方提供了 SDK - [camunda-external-task-client](https://github.com/camunda/camunda-external-task-client-js)，封装了实现外部服务的 API，简化了外部服务的开发工作。
+
+
+
+### 示例 - 使用 Node.js 开发外部服务
+
+建立以下的流程：
+
+<img src="img/BPMN/service-task-exp-0.png" style="zoom:35%; float:left;" />
+
+设置服务任务属性：
+
+<img src="img/BPMN/service-task-exp-1.png" style="zoom:50%; float:left;" />
+
+安装 Camunda External Task Client JS library：
+
+```bash
+npm install camunda-external-task-client-js -S
+```
+
+外部服务代码：
+
+```javascript
+
+```
+
+
 
 
 
