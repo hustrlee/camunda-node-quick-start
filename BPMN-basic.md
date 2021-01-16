@@ -17,6 +17,8 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 | User Task（用户任务）    | <img src="img/BPMN/user-task.png" alt="user-task" style="zoom:25%;" /> | 对由“人”完成的活动进行建模。         |
 | Service Task（服务任务） | <img src="img/BPMN/service-task.png" alt="user-task" style="zoom:25%;" /> | 对由“计算机设备”完成的活动进行建模。 |
 | Exclusive Gateway（排他网关） |  |  |
+| Parallel Gateway（并行网关） |  |  |
+| Inclusive Gateway（包含网关） |  |  |
 
 
 
