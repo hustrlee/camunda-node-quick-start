@@ -13,12 +13,13 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 | --------------------------------- | :----------------------------------------------------------: | ------------------------------------------------------------ |
 | None Start Event（空开始事件）    | <img src="img/BPMN/start-event-none.png" style="width: 50px;" /> | 对**“无条件开始“**进行建模，通常一个流程都是从**”None Event“**开始的。 |
 | Timer Start Event（定时开始事件） | <img src="img/BPMN/start-event-timer.png" style="width: 50px;" /> | **定时**启动流程。                                           |
-| None End Event（空结束事件） | <img src="img/BPMN/end-event-none.png" style="width: 50px;" /> | 对“无操作结束”进行建模，通常每个流程分支均应该结束于该事件。 |
-| User Task（用户任务）    | <img src="img/BPMN/user-task.png" alt="user-task" style="zoom:25%;" /> | 对由“人”完成的活动进行建模。         |
-| Service Task（服务任务） | <img src="img/BPMN/service-task.png" alt="user-task" style="zoom:25%;" /> | 对由“计算机设备”完成的活动进行建模。 |
-| Exclusive Gateway（排他网关） |  |  |
-| Parallel Gateway（并行网关） |  |  |
-| Inclusive Gateway（包含网关） |  |  |
+| None End Event（空结束事件） | <img src="img/BPMN/end-event-none.png" style="width: 50px;" /> | 对**“无操作结束”**进行建模，通常每个流程分支均应该结束于该事件。 |
+| User Task（用户任务）    | <img src="img/BPMN/user-task.png" alt="user-task" style="zoom:25%;" /> | 对由**“人”**完成的活动进行建模。     |
+| Service Task（服务任务） | <img src="img/BPMN/service-task.png" alt="user-task" style="zoom:25%;" /> | 对由**“计算机设备”**完成的活动进行建模。 |
+| Exclusive Gateway（排他网关） | <img src="img/BPMN/exclusive-gateway.png" style="width: 50px;" /> | 对流程中的**“决策”**进行建模。 |
+| Parallel Gateway（并行网关） | <img src="img/BPMN/parallel-gateway.png" style="width: 50px;" /> | 对流程中的**”并发活动“**进行建模。 |
+| Inclusive Gateway（包含网关） | <img src="img/BPMN/inclusive-gateway.png" style="width: 50px;" /> | 可视为**排他网关**和**并行网关**的组合，对**“有条件的并行活动”**进行建模。 |
+| Pool and Lane（泳池与泳道） | <img src="img/BPMN/pool-lane.png" style="zoom: 25%;" /> | 对**多参与者**的流程进行建模。 |
 
 
 
@@ -612,6 +613,8 @@ client.subscribe("simple-service", async function ({ task, taskService }) {
 - 如果外部任务业务逻辑中需要向其它系统或数据库写入数据，那么重启外部任务服务后，这部分数据也将被重写，这有可能导致产生重复数据，需要开发者编写额外的业务逻辑来避免这种错误。
 
 
+
+## 泳池与泳道
 
 ### 一个简单的 BPMN 流程图 - 发货流程
 
