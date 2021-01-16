@@ -6,6 +6,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.21.1"
+    "axios": "^0.21.1",
+    "camunda-external-task-client-js": "^2.0.0",
+    "console-stamp": "^0.2.9"
   }
 }
