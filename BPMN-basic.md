@@ -18,8 +18,8 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 | Service Task（服务任务） | <img src="img/BPMN/service-task.png" alt="user-task" style="zoom:25%;" /> | 对由**“计算机设备”**完成的活动进行建模。 |
 | Exclusive Gateway（排他网关） | <img src="img/BPMN/exclusive-gateway.png" style="width: 50px;" /> | 对流程中的**“决策”**进行建模。 |
 | Parallel Gateway（并行网关） | <img src="img/BPMN/parallel-gateway.png" style="width: 50px;" /> | 对流程中的**”并发活动“**进行建模。 |
-| Inclusive Gateway（包含网关） | <img src="img/BPMN/inclusive-gateway.png" style="width: 50px;" /> | 可视为**排他网关**和**并行网关**的组合，对**“有条件的并行活动”**进行建模。 |
-| Pool and Lane（泳池与泳道） | <img src="img/BPMN/pool-lane.png" style="zoom: 25%;" /> | 对**多参与者**的流程进行建模。 |
+| Inclusive Gateway（包容网关） | <img src="img/BPMN/inclusive-gateway.png" style="width: 50px;" /> | 可视为**排他网关**和**并行网关**的组合，对**“有条件的并行活动”**进行建模。 |
+| Pool and Lane（泳池与泳道） | <img src="img/BPMN/pool-lane.png" style="zoom: 25%;" /> | 对拥有**多个参与者**的流程进行建模。 |
 
 
 
@@ -614,19 +614,101 @@ client.subscribe("simple-service", async function ({ task, taskService }) {
 
 
 
+## 排他网关
+
+排他网关（Exclusive Gateway），也称为 XOR Gateway，用于在流程中对**决策**进行建模。当执行到此网关时，将按照定义它们的顺序评估出所有传出序列流，选择条件评估为**“true”**的序列流以继续该过程。
+
+<img src="/Users/rlee/camunda-node-quick-start/img/BPMN/exclusive-gateway-0.png" style="zoom:33%;float:left;" />
+
+请注意！排他网关仅选择**唯一**一个序列流，如果多个序列流的条件评估为“true”，则将仅选择 XML 中定义的第一个序列流以继续该流程。
+
+> 排他网关类似于编程中的 `if-elseif-else` 嵌套，是有优先级的。
+
+如果没有任何分支的评估结果为“true”，将导致运行异常，可以通过设置默认流来解决这个问题。
+
+
+
+### 示例 - 在 Modeler 中使用排他网关
+
+<img src="/Users/rlee/camunda-node-quick-start/img/BPMN/exclusive-gateway-1.png" style="zoom:50%;float:left;" />
+
+
+
+## 并行网关
+
+并行网关（Parallel Gateway），也称为 AND Gateway，用于对流程中的**并发**进行建模。它允许分叉进入多个执行路径，或联结多个进入网关的执行路径。
+
+<img src="img/BPMN/parallel-gateway-0.png" style="zoom:33%; float:left;" />
+
+并行网关的功能基于传入和传出的序列流：
+
+- **fork：**并行执行所有传出的序列流，为每个序列流创建一个并发执行。
+- **join：**到达并行网关的所有并发执行都在网关处等待，直到每个传入序列流的执行都已到达。然后，流程通过网关继续执行。
+
+> **join**的局限性：
+>
+> 请注意，Camunda 在实现并行网关时，使用了令牌计数的方式，即：当到达网关的令牌数等于传入序列流的数量时，就会通过该网关，而不需要每个并行序列流都提供令牌。也就是说：如果某个序列流被执行了 2 次，那么并行网关可能会被提前触发，而此时某个输入序列流尚未执行完毕。
+
+并行网关可以同时具备 **fork** 和 **join** 行为：首先并行网关会 **join** 所有的传入序列流；然后再 **fork** 多个并发的执行路径。
+
+并行网关无需“平衡”（即：并行网关无需成对出现）。并行网关仅仅等待所有传入的序列流，并为每个传出的序列流创建并发的执行路径，不受流程中其它构造的影响。因此，以下过程是合法的：
+
+<img src="img/BPMN/parallel-gateway-1.png" style="zoom:33%; float:left;" />
+
+
+
+## 包容网关
+
+包容网关（Inclusive Gateway），也称为 OR Gateway，可视为“排他网关”与“并行网关”的组合。
+
+<img src="img/BPMN/inclusive-gateway-0.png" style="zoom:33%; float:left;" />
+
+上述流程，如果用“排他网关”与“并行网关”来实现，可以是这样的：
+
+<img src="img/BPMN/inclusive-gateway-1.png" style="zoom:33%; float:left;" />
+
+
+
+
+
 ## 泳池与泳道
 
-### 一个简单的 BPMN 流程图 - 发货流程
-
-下图是一个电商的发货流程：
-
-![发货流程](img/BPMN-shipment-process.png)
-
-在此示例中，使用了**泳池（Pool）**和**泳道（Lane）**来对参与此流程的人员进行建模。工作流引擎将驱动该流程，分配用户任务，并负责人员之间（用户任务之间）的通信。开发者只需处理用户任务，而无需关注用户间的通信和流程的推进。
+泳池与泳道（Pool、Lane）对“参与者”进行建模。“参与者建模”把系统和角色联系起来，能更好的反映客户需求。但是这一建模并不会影响流程的执行，因此工作流引擎并不需要处理它们。
 
 
 
-### 另一个简单的 BPMN 流程图 - 披萨协作
+### 示例 1 - 发货流程
 
-下面的示例中，我们对“点披萨的客户”和“披萨店”之间的交互进行显示建模。“客户”和“披萨店”被称之为**“参与者”**，各自拥有自己的泳池。
+![发货流程](img/BPMN/shipment-process.png)
 
+在此示例中，使用了**泳池（Pool）**和**泳道（Lane）**来对参与此流程的角色进行建模。工作流引擎将驱动该流程，分配用户任务，并负责角色之间（用户任务之间）的通信。开发者只需处理用户任务，而无需关注用户任务间的通信和流程的推进。
+
+
+
+### 示例 2 - 披萨协作
+
+下面的示例中，我们对“披萨客户”和“披萨店”之间的交互进行显示建模。“披萨客户”和“披萨店”被称之为**“参与者”**，各自拥有自己的泳池。
+
+![披萨协作](img/BPMN/pizza-collaboration.png)
+
+在此示例中，使用了两个泳池，每个泳池代表一个**独立的流程**，共同构成**协作**图。协作图建模可以显示业务伙伴之间的交互。业务伙伴可以是公司，也可以是团队、部门。是否需要使用具有不同池的协作图，完全取决于建模者的决定，并不会影响流程的实际运行结果。通常以下情况应该使用协作图：
+
+- 由多个应用系统组成的流程
+- 由人与系统之间交互构成的流程
+- 应用系统需要和外部系统（第三方系统）进行交互的流程
+
+
+
+### 示例 3 - 使用协作图与外部系统进行交互建模
+
+<img src="img/BPMN/pizza-collaboration-0.png" alt="披萨协作" style="zoom:33%; float:left;" />
+
+示例 2 的流程中，如果是为披萨店开发系统，那么“披萨客户”就是外部系统，客户是“人”，还是“电商 app” 并不重要，重要的是：“披萨店系统”对外提供哪些服务（API、接口、服务是一个意思）。
+
+
+
+### 示例 4 - 使用协作图进行顶层建模
+
+<img src="img/BPMN/pizza-collaboration-1.png" alt="披萨协作" style="zoom:33%; float:left;" />
+
+可以对“披萨协作”进行顶层建模。
