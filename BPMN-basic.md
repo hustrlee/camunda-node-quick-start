@@ -1,10 +1,10 @@
-# 基本 BPMN 元素和建模方法
+# 基本的 BPMN 元素和建模方法
 
 BPMN（Business Process Model and Notation，业务流程模型和注释）是流程建模的全球标准，是成功进行 Business-IT-Alignment（业务与 IT 一致性）的最重要组成部分之一。
 
 BPMN 不是由某个企业主导的标准，而是由 [OMG](https://www.omg.org/) 制订的。OGM 制订了众多的国际标准，例如：UML。
 
-Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 BPMN 元素，及其在 Camunda BPM 中的使用方法。
+Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 BPMN 元素，及其在 Camunda 中的使用方法。
 
 
 
@@ -13,6 +13,7 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 | --------------------------------- | :----------------------------------------------------------: | ------------------------------------------------------------ |
 | None Start Event（空开始事件）    | <img src="img/BPMN/start-event-none.png" style="width: 50px;" /> | 对**“无条件开始“**进行建模，通常一个流程都是从**”None Event“**开始的。 |
 | Timer Start Event（定时开始事件） | <img src="img/BPMN/start-event-timer.png" style="width: 50px;" /> | **定时**启动流程。                                           |
+| Message Start Event（消息开始事件） | <img src="img/BPMN/start-event-message.png" style="width: 50px;" /> | 对由**“随机事件触发”**的流程进行建模。 |
 | None End Event（空结束事件） | <img src="img/BPMN/end-event-none.png" style="width: 50px;" /> | 对**“无操作结束”**进行建模，通常每个流程分支均应该结束于该事件。 |
 | User Task（用户任务）    | <img src="img/BPMN/user-task.png" alt="user-task" style="zoom:25%;" /> | 对由**“人”**完成的活动进行建模。     |
 | Service Task（服务任务） | <img src="img/BPMN/service-task.png" alt="user-task" style="zoom:25%;" /> | 对由**“计算机设备”**完成的活动进行建模。 |
@@ -25,9 +26,7 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 
 ## 空开始事件
 
-所有的流程都从一个**开始事件**开始，**空开始事件**要求用户手动启动一个流程，可以通过 `POST /process-definition/key/{key}/start` 来启动一个流程实例。
-
-> 启动流程实例 API 的完整参数参见：[Start Process Instance](https://docs.camunda.org/manual/latest/reference/rest/process-definition/post-start-process-instance/)
+所有的流程都从一个**开始事件**开始，**空开始事件**要求用户手动启动一个流程，可以通过 [`POST /process-definition/key/{key}/start`](https://docs.camunda.org/manual/latest/reference/rest/process-definition/post-start-process-instance/) 来启动一个流程实例。
 
 
 
@@ -74,6 +73,24 @@ Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 B
 <img src="img/BPMN/timer-start-exp-1.png" style="zoom:50%; float:left;" />
 
 - 部署该流程后，无须做任何操作，当到达指定时间，该流程会自动启动一个实例。
+
+
+
+## 消息开始事件
+
+消息开始事件可使用命名消息启动一个新流程实例，是对**“随机事件触发流程”**进行建模。
+
+外部应用向 Camunda 发送命名消息可使用 API：[`POST /message`](https://docs.camunda.org/manual/latest/reference/rest/message/post-message/)。
+
+
+
+### 示例
+
+在 Modeler 中建立以下的模型：
+
+<img src="img/BPMN/start-event-message-0.png" style="zoom:50%; float:left;" />
+
+
 
 
 
