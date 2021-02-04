@@ -4,7 +4,9 @@ BPMN（Business Process Model and Notation，业务流程模型和注释）是�
 
 BPMN 不是由某个企业主导的标准，而是由 [OMG](https://www.omg.org/) 制订的。OGM 制订了众多的国际标准，例如：UML。
 
-Camunda BPM 实现了 BPMN 中的大部分建模方法。本文介绍基本的 BPMN 元素，及其在 Camunda 中的使用方法。
+Camunda BPM 实现了 BPMN 中的大部分建模方法。
+
+本文介绍基本的 BPMN 元素，及其在 Camunda 中的使用方法。
 
 
 
