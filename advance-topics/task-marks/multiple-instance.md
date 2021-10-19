@@ -31,7 +31,14 @@
 
 > 这些值是 execution local variable，可以通过 `GET /execution/{id}/localVariables/{varName}` 来查询这些值。
 
-另外，流程引擎将为每个执行实例创建以下的局部变量（即对其它的执行不可见，且不存储在流程实例级别）：
+另外，流程引擎将为每个执行实例（Task）创建以下的局部变量（即对其它的执行不可见，且不存储在流程实例级别）：
 
 - `loopCounter`：指示特定实例在多实例循环中的索引。
+
+多实例的实例数，在进入多实例活动时计算一次。有两种配置方法：
+
+- 使用 `loopCardinality` 直接指定实例数 - 数字，或者解析为正整数的表达式。
+- 使用 `Collection` 指定作为集合的流程变量。对集合中的每个项目，将创建一个活动实例；且将集合中每个项目赋值给 `Element Variable` 指定的执行实例局部变量 。
+
+> `collection` / `elementVariable` 是 Camunda 的扩展方法，并不是标准的 BPMN 2.0 语法，无法迁移到其它的流程引擎。
 
