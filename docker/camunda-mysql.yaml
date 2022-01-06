@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+    camunda:
+        image: camunda/camunda-bpm-platform:run-latest
+        environment:
+            - DB_DRIVER=com.mysql.cj.jdbc.Driver
+            - DB_URL=jdbc:mysql://mysql:3306/camunda?sendFractionalSeconds=false
+            - DB_USERNAME=camunda
+            - DB_PASSWORD=camunda
+            - WAIT_FOR=mysql:3306
+            - CAMUNDA_BPM_RUN_CORS_ENABLED=true
+            - CAMUNDA_BPM_RUN_EXAMPLE_ENABLED=false
+            - CAMUNDA_BPM_ADMIN_USER_ID=camunda
+            - CAMUNDA_BPM_ADMIN_USER_PASSWORD=camunda
+        ports:
+            - 28080:8080
+        restart: unless-stopped
+
+    mysql:
+        image: mysql:5.7
+        environment:
+            - MYSQL_ROOT_PASSWORD=camunda
+            - MYSQL_USER=camunda
+            - MYSQL_PASSWORD=camunda
+            - MYSQL_DATABASE=camunda
+        volumes:
+            - camunda-db:/var/lib/mysql
+        restart: unless-stopped
+
+volumes:
+    camunda-db:
