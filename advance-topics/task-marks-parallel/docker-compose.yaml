@@ -2,5 +2,9 @@ version: '3'
 services:
   camunda:
     image: camunda/camunda-bpm-platform:run-latest
+    environment:
+      - CAMUNDA_BPM_RUN_EXAMPLE_ENABLED=false
+    # volumes:
+    #   - ./call.js:/camunda/configuration/userlib/call.js
     ports:
       - 8080:8080
