@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1dfr8bd" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="call-ocr" name="OCR调用" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0u6cw7y</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0u6cw7y" sourceRef="StartEvent_1" targetRef="Activity_0cqfq3g" />
+    <bpmn:subProcess id="Activity_0cqfq3g">
+      <bpmn:incoming>Flow_0u6cw7y</bpmn:incoming>
+      <bpmn:outgoing>Flow_1lufxk8</bpmn:outgoing>
+      <bpmn:startEvent id="Event_1wwh6ne">
+        <bpmn:outgoing>Flow_1a7e1mo</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_1a7e1mo" sourceRef="Event_1wwh6ne" targetRef="ocr-request" />
+      <bpmn:endEvent id="Event_08169aa">
+        <bpmn:incoming>Flow_16w7bg1</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1hy85pe" sourceRef="ocr-request" targetRef="Event_1oo94q4" />
+      <bpmn:sequenceFlow id="Flow_17gaypd" sourceRef="Event_1oo94q4" targetRef="Activity_1qrs7mn" />
+      <bpmn:intermediateCatchEvent id="Event_1oo94q4" name="等待 OCR 结果">
+        <bpmn:incoming>Flow_1hy85pe</bpmn:incoming>
+        <bpmn:outgoing>Flow_17gaypd</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_0lx8t0o" messageRef="Message_0gq2n74" />
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="Flow_16w7bg1" sourceRef="Activity_1qrs7mn" targetRef="Event_08169aa" />
+      <bpmn:scriptTask id="Activity_1qrs7mn" name="更新识别结果" scriptFormat="javascript">
+        <bpmn:incoming>Flow_17gaypd</bpmn:incoming>
+        <bpmn:outgoing>Flow_16w7bg1</bpmn:outgoing>
+        <bpmn:script>console.log("更新识别结果")</bpmn:script>
+      </bpmn:scriptTask>
+      <bpmn:scriptTask id="ocr-request" name="发送 OCR 请求" scriptFormat="javascript">
+        <bpmn:extensionElements>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="parentActivityInstanceId">
+              <camunda:script scriptFormat="javascript">execution.getParentActivityInstanceId()</camunda:script>
+            </camunda:inputParameter>
+          </camunda:inputOutput>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1a7e1mo</bpmn:incoming>
+        <bpmn:outgoing>Flow_1hy85pe</bpmn:outgoing>
+        <bpmn:script>console.log("发送 OCR 请求。")</bpmn:script>
+      </bpmn:scriptTask>
+    </bpmn:subProcess>
+    <bpmn:endEvent id="Event_1ohihjo">
+      <bpmn:incoming>Flow_1xbqcqe</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1lufxk8" sourceRef="Activity_0cqfq3g" targetRef="Activity_067b2r5" />
+    <bpmn:sequenceFlow id="Flow_0bwxpqh" sourceRef="Event_1g9akkr" targetRef="Activity_00nva93" />
+    <bpmn:scriptTask id="Activity_00nva93" name="结束监听消息" scriptFormat="javascript">
+      <bpmn:incoming>Flow_0bwxpqh</bpmn:incoming>
+      <bpmn:outgoing>Flow_1nmum8p</bpmn:outgoing>
+      <bpmn:script>console.log("任务超时")</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:boundaryEvent id="Event_1g9akkr" attachedToRef="Activity_0cqfq3g">
+      <bpmn:outgoing>Flow_0bwxpqh</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1rwywpv">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_1xbqcqe" sourceRef="Activity_067b2r5" targetRef="Event_1ohihjo" />
+    <bpmn:userTask id="Activity_067b2r5" name="check point">
+      <bpmn:incoming>Flow_1lufxk8</bpmn:incoming>
+      <bpmn:incoming>Flow_1nmum8p</bpmn:incoming>
+      <bpmn:outgoing>Flow_1xbqcqe</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1nmum8p" sourceRef="Activity_00nva93" targetRef="Activity_067b2r5" />
+  </bpmn:process>
+  <bpmn:message id="Message_0gq2n74" name="ocr-complete" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="call-ocr">
+      <bpmndi:BPMNEdge id="Flow_0u6cw7y_di" bpmnElement="Flow_0u6cw7y">
+        <di:waypoint x="188" y="180" />
+        <di:waypoint x="240" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1lufxk8_di" bpmnElement="Flow_1lufxk8">
+        <di:waypoint x="820" y="180" />
+        <di:waypoint x="870" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bwxpqh_di" bpmnElement="Flow_0bwxpqh">
+        <di:waypoint x="670" y="298" />
+        <di:waypoint x="670" y="360" />
+        <di:waypoint x="720" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xbqcqe_di" bpmnElement="Flow_1xbqcqe">
+        <di:waypoint x="970" y="180" />
+        <di:waypoint x="1022" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nmum8p_di" bpmnElement="Flow_1nmum8p">
+        <di:waypoint x="820" y="360" />
+        <di:waypoint x="845" y="360" />
+        <di:waypoint x="845" y="210" />
+        <di:waypoint x="870" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ohihjo_di" bpmnElement="Event_1ohihjo">
+        <dc:Bounds x="1022" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_16nyzbg_di" bpmnElement="Activity_067b2r5">
+        <dc:Bounds x="870" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_174oi1z_di" bpmnElement="Activity_00nva93">
+        <dc:Bounds x="720" y="320" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gput77_di" bpmnElement="Activity_0cqfq3g" isExpanded="true">
+        <dc:Bounds x="240" y="80" width="580" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1a7e1mo_di" bpmnElement="Flow_1a7e1mo">
+        <di:waypoint x="298" y="180" />
+        <di:waypoint x="330" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hy85pe_di" bpmnElement="Flow_1hy85pe">
+        <di:waypoint x="430" y="180" />
+        <di:waypoint x="492" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17gaypd_di" bpmnElement="Flow_17gaypd">
+        <di:waypoint x="528" y="180" />
+        <di:waypoint x="590" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16w7bg1_di" bpmnElement="Flow_16w7bg1">
+        <di:waypoint x="690" y="180" />
+        <di:waypoint x="762" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1wwh6ne_di" bpmnElement="Event_1wwh6ne">
+        <dc:Bounds x="262" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_08169aa_di" bpmnElement="Event_08169aa">
+        <dc:Bounds x="762" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0wq3wgc_di" bpmnElement="Event_1oo94q4">
+        <dc:Bounds x="492" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="473" y="205" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0zuoyja_di" bpmnElement="Activity_1qrs7mn">
+        <dc:Bounds x="590" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_04jyw4j_di" bpmnElement="ocr-request">
+        <dc:Bounds x="330" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1rgca2o_di" bpmnElement="Event_1g9akkr">
+        <dc:Bounds x="652" y="262" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
