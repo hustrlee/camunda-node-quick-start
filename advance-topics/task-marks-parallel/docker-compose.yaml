@@ -4,6 +4,8 @@ services:
     image: camunda/camunda-bpm-platform:run-latest
     environment:
       - CAMUNDA_BPM_RUN_EXAMPLE_ENABLED=false
+      - CAMUNDA_BPM_JOB_EXECUTION_WAIT_TIME_IN_MILLIS=500
+      - CAMUNDA_BPM_JOB_EXECUTION_MAX_WAIT=1000
     # volumes:
     #   - ./call.js:/camunda/configuration/userlib/call.js
     ports:
