@@ -25,7 +25,7 @@ JSON 是 Javascript 的基本数据类型（Object），而在 Java 中没有 JS
 
 ```
 variables: {
-	customer: {
+  customer: {
     value: {
       "name": "jonny",
       "address": {
@@ -33,7 +33,7 @@ variables: {
         "postcode": 1234
       }
     }
-	}
+  }
 }
 ```
 
@@ -104,7 +104,7 @@ let customer = {
 
 let variables = {
   customer: {
-    value: JSON.stringfy(customer),
+    value: JSON.stringify(customer),
     type: "Json"
   }
 }
