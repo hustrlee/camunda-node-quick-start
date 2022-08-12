@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1ylwgg7" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:process id="rollback-if-timeout" name="超时自动退回的抢单流程" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1qza1wi</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1qza1wi" sourceRef="StartEvent_1" targetRef="competition-task" />
+    <bpmn:sequenceFlow id="Flow_05pvpq7" sourceRef="competition-task" targetRef="workload" />
+    <bpmn:endEvent id="Event_11qfmw4">
+      <bpmn:incoming>Flow_0xb2k3b</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0xb2k3b" sourceRef="workload" targetRef="Event_11qfmw4" />
+    <bpmn:boundaryEvent id="Event_1gh6vm4" attachedToRef="workload">
+      <bpmn:outgoing>Flow_1cwwbac</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1clnj4a">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${duration}</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_1cwwbac" sourceRef="Event_1gh6vm4" targetRef="Activity_1fql3yw" />
+    <bpmn:userTask id="competition-task" name="抢单">
+      <bpmn:incoming>Flow_1qza1wi</bpmn:incoming>
+      <bpmn:incoming>Flow_0q49130</bpmn:incoming>
+      <bpmn:outgoing>Flow_05pvpq7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="workload" name="工作" camunda:assignee="${operator}">
+      <bpmn:incoming>Flow_05pvpq7</bpmn:incoming>
+      <bpmn:outgoing>Flow_0xb2k3b</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0q49130" sourceRef="Activity_1fql3yw" targetRef="competition-task" />
+    <bpmn:scriptTask id="Activity_1fql3yw" name="清除 Assignee" scriptFormat="javascript">
+      <bpmn:incoming>Flow_1cwwbac</bpmn:incoming>
+      <bpmn:outgoing>Flow_0q49130</bpmn:outgoing>
+      <bpmn:script>execution.setVariable("assignee", "timeout")</bpmn:script>
+    </bpmn:scriptTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="rollback-if-timeout">
+      <bpmndi:BPMNEdge id="Flow_1qza1wi_di" bpmnElement="Flow_1qza1wi">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05pvpq7_di" bpmnElement="Flow_05pvpq7">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="430" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xb2k3b_di" bpmnElement="Flow_0xb2k3b">
+        <di:waypoint x="530" y="117" />
+        <di:waypoint x="592" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cwwbac_di" bpmnElement="Flow_1cwwbac">
+        <di:waypoint x="500" y="175" />
+        <di:waypoint x="500" y="260" />
+        <di:waypoint x="460" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q49130_di" bpmnElement="Flow_0q49130">
+        <di:waypoint x="360" y="260" />
+        <di:waypoint x="320" y="260" />
+        <di:waypoint x="320" y="157" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_11qfmw4_di" bpmnElement="Event_11qfmw4">
+        <dc:Bounds x="592" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1cvy69v_di" bpmnElement="competition-task">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1m5je1i_di" bpmnElement="workload">
+        <dc:Bounds x="430" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_01no9xm_di" bpmnElement="Activity_1fql3yw">
+        <dc:Bounds x="360" y="220" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1wbjdrk_di" bpmnElement="Event_1gh6vm4">
+        <dc:Bounds x="482" y="139" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="463" y="182" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
